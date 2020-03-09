@@ -1,0 +1,39 @@
+https://www.codeproject.com/Questions/800002/OSK-Key-board-using-Csharp
+
+https://www.dreamincode.net/forums/topic/174949-open-on-screen-keyboard-in-c%23/
+
+
+
+//way1
+
+var virtualKeyboard = new System.Diagnostics.Process();
+virtualKeyboard = System.Diagnostics.Process.Start("osk.exe"); // open
+virtualKeyboard.Kill(); 
+
+
+
+//way 2 
+
+using System.Diagnostics;
+
+private void btnOSK_Click(object sender, EventArgs e)
+        {
+            Process.Start(@"C:\windows\system32\osk.exe");
+        }
+
+
+or 
+
+//way3 on button 
+
+private void btnOSK_Click(object sender, EventArgs e)
+        {
+
+           System.Diagnostics.Process.Start("osk");
+        }
+
+
+
+
+
+
