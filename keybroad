@@ -1,0 +1,93 @@
+using Microsoft.Data.Sqlite;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Data.SQLite;
+using System.Drawing;
+using System.Diagnostics;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace WindowsFormsApp1
+{
+    public partial class Form1 : Form
+    {
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool Wow64DisableWow64FsRedirection(ref IntPtr ptr);
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern bool Wow64RevertWow64FsRedirection(IntPtr ptr);
+
+        private const UInt32 WM_SYSCOMMAND = 0x112;
+        private const UInt32 SC_RESTORE = 0xf120;
+        [DllImport("user32.dll", CharSet = CharSet.Auto)]
+        static extern IntPtr SendMessage(IntPtr hWnd, UInt32 Msg, IntPtr wParam, IntPtr lParam);
+
+        private string OnScreenKeyboadApplication = "osk.exe";
+        public Form1()
+        {
+            InitializeComponent();
+
+         
+        }
+
+      
+
+
+
+      
+
+        private void xx(object sender, EventArgs e)
+        {
+            string processName = System.IO.Path.GetFileNameWithoutExtension(OnScreenKeyboadApplication);
+
+            var query = from process in Process.GetProcesses()
+                        where process.ProcessName == processName
+                        select process;
+            var keyboardProcess = query.FirstOrDefault();
+
+
+            if (keyboardProcess == null)
+            {
+                IntPtr ptr = new IntPtr(); ;
+                bool sucessfullyDisabledWow64Redirect = false;
+
+                //Disable x64 directory virtualization if we're on x64,
+                //otherwise keyboard launch will fail.
+                if (System.Environment.Is64BitOperatingSystem)
+                {
+                    sucessfullyDisabledWow64Redirect = Wow64DisableWow64FsRedirection(ref ptr);
+                }
+
+                //osk.exe is in windows/system folder. So we can directky call it without path
+                using (Process osk = new Process())
+                {
+                    osk.StartInfo.FileName = OnScreenKeyboadApplication;
+                    osk.Start();
+                    //osk.WaitForInputIdle(2000);
+                }
+
+                //Re-enable directory virtualisation if it was disabled.
+                if (System.Environment.Is64BitOperatingSystem)
+                    if (sucessfullyDisabledWow64Redirect)
+                        Wow64RevertWow64FsRedirection(ptr);
+            }
+            else
+            {
+                //Bring keyboard to the front if it's already running
+                var windowHandle = keyboardProcess.MainWindowHandle;
+                SendMessage(windowHandle, WM_SYSCOMMAND, new IntPtr(SC_RESTORE), new IntPtr(0));
+            }
+        }
+
+        private void Form1_Load_1(object sender, EventArgs e)
+        {
+            xx(sender, e);
+            Application.Exit();
+        }
+    }
+}
